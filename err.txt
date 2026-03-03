@@ -1,0 +1,2 @@
+syntax error, unexpected end of file, expecting "elseif" or "else" or "endif" (View: D:\store\PROJECT\athathV3\resources\views\pages\home.blade.php)
+D:\store\PROJECT\athathV3\storage\framework\views\8df96e342c90eb4b07ca4ed2c47058c0.php:95
