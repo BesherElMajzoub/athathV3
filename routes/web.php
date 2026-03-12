@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ClickTrackingController;
 use App\Http\Controllers\Admin\ContentCalendarController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProgrammaticPageController;
@@ -13,7 +14,8 @@ use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 // ----------------------------------------------------------------
-
+// Public Routes
+// ----------------------------------------------------------------
 
 Route::get('/', function () {
     $page = \App\Models\StaticPage::where('slug', 'home')->first();
@@ -28,7 +30,7 @@ Route::get('/services', function () {
 Route::get('/services/{slug}', function ($slug) {
     $service = \App\Models\ServicePage::where('slug', $slug)->where('is_published', true)->firstOrFail();
     return view('pages.service_show', compact('service'));
-})->name('services.show');
+})->name('services.show')->where('slug', '.*');
 
 Route::get('/districts', function () {
     $districts = \App\Models\DistrictPage::where('is_published', true)->get();
@@ -49,6 +51,10 @@ Route::get('/contact', function () {
     $page = \App\Models\StaticPage::where('slug', 'contact')->first();
     return view('pages.contact', compact('page'));
 })->name('contact');
+
+Route::get('/about', function () {
+    return view('pages.about');
+})->name('about');
 
 // Blog (public)
 Route::prefix('blog')->name('blog.')->group(function () {
@@ -72,7 +78,7 @@ Route::get('/sitemaps/programmatic.xml', [SitemapController::class, 'programmati
 Route::get('/robots.txt', [RobotsController::class, 'index'])->name('robots');
 
 // ----------------------------------------------------------------
-// Admin Panel (no auth middleware — add your own auth as needed)
+// Admin Panel
 // ----------------------------------------------------------------
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -108,4 +114,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/{item}/skip', [ContentCalendarController::class, 'skip'])->name('skip');
         Route::delete('/{item}', [ContentCalendarController::class, 'destroy'])->name('destroy');
     });
+
+    // Click Tracking Dashboard
+    Route::get('clicks', [\App\Http\Controllers\Admin\ClickStatsController::class, 'index'])->name('clicks.index');
 });

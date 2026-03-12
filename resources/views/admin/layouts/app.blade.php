@@ -320,7 +320,14 @@
                 <span class="icon">📊</span> تقارير SEO
             </a>
 
+            <div class="nav-group-label">التتبع</div>
+            <a href="{{ route('admin.clicks.index') }}"
+                class="nav-link {{ request()->routeIs('admin.clicks.*') ? 'active' : '' }}">
+                <span class="icon">📈</span> تتبع النقرات
+            </a>
+
             <div class="nav-group-label">روابط سريعة</div>
+            <a href="{{ url('/') }}" target="_blank" class="nav-link"><span class="icon">🏠</span> الموقع</a>
             <a href="{{ url('/blog') }}" target="_blank" class="nav-link"><span class="icon">🌐</span> عرض
                 المدونة</a>
             <a href="{{ url('/sitemap.xml') }}" target="_blank" class="nav-link"><span class="icon">🗺️</span>

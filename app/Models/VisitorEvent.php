@@ -6,14 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class VisitorEvent extends Model
 {
-    public $timestamps = false; // Using custom created_at
+    public $timestamps = false;
 
     protected $fillable = [
-        'session_uuid', 'event_type', 'page_url', 'meta_data', 'created_at'
+        'session_uuid', 'event_type', 'page_url',
+        'ip_hash', 'user_agent', 'referrer',
+        'meta_data', 'created_at',
     ];
 
     protected $casts = [
-        'meta_data' => 'array',
+        'meta_data'  => 'array',
         'created_at' => 'datetime',
     ];
 

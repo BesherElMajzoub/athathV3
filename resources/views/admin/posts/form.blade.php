@@ -8,7 +8,8 @@
 @endsection
 
 @push('head')
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/pkus4swywr522vhft4pmla83s2igk4ljxx5iqu97kcqf5uoz/tinymce/6/tinymce.min.js"
+        referrerpolicy="origin"></script>
     <style>
         .tabs {
             display: flex;

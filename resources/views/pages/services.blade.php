@@ -1,45 +1,83 @@
 @extends('layouts.main')
 
 @section('title', 'خدمات شراء الأثاث المستعمل في جدة | جميع الأقسام')
-@section('meta_description', 'تصفح جميع خدماتنا في شراء وبيع الأثاث المستعمل، غرف النوم، المطابخ، الأجهزة، والمجالس
-    بجدة. نضمن لك تقييماً عادلاً لجميع معروضاتك.')
+@section('meta_description', 'تصفح جميع خدماتنا في شراء الأثاث المستعمل بجدة: أثاث، مطابخ، مكيفات، أجهزة، غرف نوم، كنب،
+    عفش، معدات مطاعم، سكراب. تقييم عادل ودفع فوري.')
+
+    @push('schema')
+        <script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@@type": "ListItem", "position": 1, "name": "الرئيسية", "item": "{{ url('/') }}"},
+    {"@@type": "ListItem", "position": 2, "name": "الخدمات"}
+  ]
+}
+</script>
+    @endpush
 
 @section('content')
-    <div class="container py-16">
-        {{-- SEO Natural 100-word intro --}}
-        <div style="margin-bottom:3rem;border-bottom:1px solid #e5e7eb;padding-bottom:2rem;">
-            <h1 class="font-black" style="font-size:2.5rem;color:#1e3a8a;margin-bottom:1rem;">خدماتنا في شراء الأثاث المستعمل
-                بجدة</h1>
-            <p style="font-size:1.1rem;color:#4b5563;line-height:1.8;">
-                إذا كنت تبحث عن شركة موثوقة متخصصة في <strong>شراء عفش مستعمل بمدينة جدة</strong>، فنحن نوفر لك باقة شاملة
-                من الخدمات. سواء كنت ترغب في التخلص من غرف نوم قديمة، التجديد والتخلص من المطابخ المستعملة والمتهالكة، أو
-                بيع الأجهزة الكهربائية التي تأخذ حيزاً كبيراً في منزلك، فإننا نغطي جميع هذه الاحتياجات. نهدف لتقديم أسعار
-                عادلة تتناسب مع جودة وحالة القطع بنزاهة وشفافية. يقوم فريقنا المتخصص بفحص الأثاث وتقديم تقييم احترافي وسريع،
-                مما يضمن لك تجربة بيع مريحة بدءاً من الاتصال وحتى وصول فريق الفك والنقل إلى باب بيتك.
-            </p>
-        </div>
+    <section class="section">
+        <div class="container">
+            {{-- Breadcrumb --}}
+            <nav class="breadcrumb" aria-label="breadcrumb">
+                <a href="{{ url('/') }}">الرئيسية</a> ›
+                <span>الخدمات</span>
+            </nav>
 
-        <div class="grid grid-cols-3">
-            @forelse($services as $service)
-                <a href="{{ route('services.show', $service->slug) }}" class="card"
-                    style="text-decoration:none;display:block;transition:all 0.2s;">
-                    <h2>{{ $service->title }}</h2>
-                    <p>{{ Str::limit(strip_tags($service->content), 100) }}</p>
-                    <span class="text-blue-600"
-                        style="font-size:0.85rem;margin-top:1rem;display:inline-block;font-weight:700;">عرض التفاصيل
-                        ←</span>
-                </a>
-            @empty
-                <div class="card" style="grid-column:1/-1;text-align:center;">
-                    <p>قريباً سيتم إضافة تفاصيل الخدمات.</p>
-                    <!-- For test data: -->
-                    <a href="#" class="font-bold text-blue-600" style="margin-top:1rem;display:inline-block;">مثال:
-                        شراء غرف نوم مستعملة</a>
-                    <br>
-                    <a href="#" class="font-bold text-blue-600" style="margin-top:1rem;display:inline-block;">مثال:
-                        شراء مكيفات خربانة</a>
+            <div class="text-center" style="margin-bottom:3rem;">
+                <span class="section-badge">خدماتنا</span>
+                <h1 class="section-title">خدمات شراء الأثاث المستعمل بجدة</h1>
+                <p class="section-desc">
+                    إذا كنت تبحث عن شركة موثوقة متخصصة في <strong>شراء عفش مستعمل بمدينة جدة</strong>، فنحن نوفر لك باقة
+                    شاملة من الخدمات. سواء كنت ترغب في التخلص من غرف نوم قديمة، أو تجديد المطابخ المستعملة، أو بيع الأجهزة
+                    الكهربائية، فإننا نغطي جميع هذه الاحتياجات بأسعار عادلة وشفافية.
+                </p>
+            </div>
+
+            @php
+                $icons = [
+                    'شراء-اثاث-مستعمل-بجدة' => '🛋️',
+                    'شراء-مطابخ-مستعملة-بجدة' => '🍳',
+                    'شراء-مكيفات-مستعملة-بجدة' => '❄️',
+                    'شراء-اجهزة-مستعملة-بجدة' => '📺',
+                    'شراء-غرف-نوم-مستعملة-بجدة' => '🛏️',
+                    'شراء-كنب-مستعمل-بجدة' => '🛋️',
+                    'شراء-عفش-مستعمل-بجدة' => '📦',
+                    'شراء-معدات-مطاعم-مستعملة-بجدة' => '🍽️',
+                    'شراء-سكراب-بجدة' => '♻️',
+                ];
+            @endphp
+
+            <div class="grid grid-3">
+                @forelse($services as $service)
+                    <a href="{{ route('services.show', $service->slug) }}" class="card service-card card-flat">
+                        <div class="card-icon">{{ $icons[$service->slug] ?? '📦' }}</div>
+                        <h2 style="font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">
+                            {{ $service->title }}</h2>
+                        <p style="font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:1rem;">
+                            {{ Str::limit(strip_tags($service->content), 120) }}</p>
+                        <span class="card-link">عرض التفاصيل ←</span>
+                    </a>
+                @empty
+                    <div class="card" style="grid-column:1/-1;text-align:center;padding:3rem;">
+                        <p class="text-muted" style="font-size:1.1rem;">جاري إضافة تفاصيل الخدمات قريباً.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            {{-- Internal Links --}}
+            <div style="margin-top:3rem;" class="text-center">
+                <h3 style="font-weight:700;margin-bottom:1rem;font-size:1.1rem;">صفحات ذات صلة</h3>
+                <div class="links-bar">
+                    <a href="{{ route('home') }}">الرئيسية</a>
+                    <a href="{{ route('districts.index') }}">أحياء جدة</a>
+                    <a href="{{ url('/blog') }}">المدونة</a>
+                    <a href="{{ route('faq') }}">الأسئلة الشائعة</a>
+                    <a href="{{ route('contact') }}">تواصل معنا</a>
                 </div>
-            @endforelse
+            </div>
         </div>
-    </div>
+    </section>
 @endsection

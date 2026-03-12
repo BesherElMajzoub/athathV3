@@ -22,4 +22,8 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     });
 });
 
+Route::match(['get', 'post'], '/track/click', [\App\Http\Controllers\Api\ClickTrackingController::class, 'track'])
+    ->middleware('throttle:60,1'); // 60 requests per minute
+
+// Legacy endpoint (keep for backward compat)
 Route::post('/tracking/events', [\App\Http\Controllers\Api\TrackingController::class, 'logEvent']);
