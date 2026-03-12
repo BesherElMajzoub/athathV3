@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Core content seeders
         $this->call([
             ServicePageSeeder::class,
+            DistrictPageSeeder::class,
         ]);
     }
 }

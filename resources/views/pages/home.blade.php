@@ -1,7 +1,8 @@
 @extends('layouts.main')
 
 @section('title', 'شراء أثاث مستعمل بجدة | أعلى الأسعار — نشتري ونقيّم ونفك مجاناً')
-@section('meta_description', 'أفضل مؤسسة لشراء الأثاث المستعمل في جدة. نشتري مطابخ، مكيفات، أجهزة، غرف نوم، كنب، عفش.
+@section('meta_description',
+    'أفضل مؤسسة لشراء الأثاث المستعمل في جدة. نشتري مطابخ، مكيفات، أجهزة، غرف نوم، كنب، عفش.
     تقييم فوري وعادل مع فك ونقل مجاني ودفع نقدي.')
 @section('canonical', url('/'))
 @section('og_image', asset(config('business.og_image', '/assets/og-default.jpg')))
@@ -39,7 +40,7 @@
             <div class="hero-inner">
                 <div class="animate-in">
                     <span class="section-badge">🏆 الأول في جدة</span>
-                    <h1>نشتري <span>أثاثك المستعمل</span><br>بأعلى سعر في جدة</h1>
+                    <h1>شراء <span>أثاث مستعمل</span><br>بأعلى سعر في جدة</h1>
                     <p>مؤسسة متخصصة في شراء جميع أنواع الأثاث والأجهزة المستعملة. تقييم فوري وعادل، فك ونقل مجاني، ودفع نقدي
                         فوري. نغطي جميع أحياء جدة.</p>
                     <div class="hero-btns">
