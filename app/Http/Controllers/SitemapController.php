@@ -60,39 +60,44 @@ class SitemapController extends Controller
 
     public function pages(): Response
     {
-        $content = Cache::remember('sitemap:pages', self::CACHE_TTL, function () {
-            $urls = [];
-            $pages = StaticPage::select('slug', 'updated_at')->get();
+        try {
+            $content = Cache::remember('sitemap:pages', self::CACHE_TTL, function () {
+                $urls = [];
+                $pages = StaticPage::select('slug', 'updated_at')->get();
 
-            // Default fallback if no StaticPage records exist
-            if ($pages->isEmpty()) {
-                $urls[] = [
-                    'loc' => url('/'),
-                    'lastmod' => '2025-01-01T00:00:00+00:00',
-                    'changefreq' => 'monthly',
-                    'priority' => '1.0',
-                ];
-            } else {
-                foreach ($pages as $page) {
+                // Default fallback if no StaticPage records exist
+                if ($pages->isEmpty()) {
                     $urls[] = [
-                        'loc' => $page->slug === 'home' ? url('/') : url('/' . $page->slug),
-                        'lastmod' => $this->formatDate($page->updated_at),
+                        'loc' => url('/'),
+                        'lastmod' => '2025-01-01T00:00:00+00:00',
                         'changefreq' => 'monthly',
-                        'priority' => $page->slug === 'home' ? '1.0' : '0.8',
+                        'priority' => '1.0',
                     ];
+                } else {
+                    foreach ($pages as $page) {
+                        $urls[] = [
+                            'loc' => $page->slug === 'home' ? url('/') : url('/' . $page->slug),
+                            'lastmod' => $this->formatDate($page->updated_at),
+                            'changefreq' => 'monthly',
+                            'priority' => $page->slug === 'home' ? '1.0' : '0.8',
+                        ];
+                    }
                 }
-            }
-            
-            // Add blog landing page manually with last mod from posts
-            $urls[] = [
-                'loc' => url('/blog'),
-                'lastmod' => $this->latestPostUpdate(),
-                'changefreq' => 'weekly',
-                'priority' => '0.9',
-            ];
+                
+                // Add blog landing page manually with last mod from posts
+                $urls[] = [
+                    'loc' => url('/blog'),
+                    'lastmod' => $this->latestPostUpdate(),
+                    'changefreq' => 'weekly',
+                    'priority' => '0.9',
+                ];
 
-            return view('sitemaps.urlset', compact('urls'))->render();
-        });
+                return view('sitemaps.urlset', compact('urls'))->render();
+            });
+        } catch (\Throwable $e) {
+            $urls = [['loc' => url('/'), 'lastmod' => '2025-01-01T00:00:00+00:00', 'changefreq' => 'monthly', 'priority' => '1.0']];
+            $content = view('sitemaps.urlset', compact('urls'))->render();
+        }
 
         return $this->xmlResponse($content);
     }
