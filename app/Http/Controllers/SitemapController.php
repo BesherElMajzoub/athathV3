@@ -22,31 +22,61 @@ class SitemapController extends Controller
     {
         try {
             $content = Cache::remember('sitemap:index', self::CACHE_TTL, function () {
-                
-                // For sitemap index lastmod, we take the max of what's inside
-                $pagesLastmod = StaticPage::max('updated_at') ?? '2025-01-01T00:00:00+00:00';
-                $servicesLastmod = ServicePage::where('is_published', true)->max('updated_at') ?? '2025-01-01T00:00:00+00:00';
-                $districtsLastmod = DistrictPage::where('is_published', true)->max('updated_at') ?? '2025-01-01T00:00:00+00:00';
-                $programmaticLastmod = ProgrammaticPage::published()->indexable()->max('updated_at') ?? '2025-01-01T00:00:00+00:00';
-                
-                $sitemaps = [
-                    ['url' => url('/sitemaps/pages.xml'), 'lastmod' => $this->formatDate($pagesLastmod)],
-                    ['url' => url('/sitemaps/services.xml'), 'lastmod' => $this->formatDate($servicesLastmod)],
-                    ['url' => url('/sitemaps/districts.xml'), 'lastmod' => $this->formatDate($districtsLastmod)],
-                    ['url' => url('/sitemaps/programmatic.xml'), 'lastmod' => $this->formatDate($programmaticLastmod)],
-                    ['url' => url('/sitemaps/blog.xml'), 'lastmod' => $this->latestPostUpdate()],
+                $sitemaps = [];
+
+                // Pages — always present (has at least home page)
+                $pagesLastmod = StaticPage::max('updated_at') ?? now();
+                $sitemaps[] = [
+                    'url'     => url('/sitemaps/pages.xml'),
+                    'lastmod' => $this->formatDate($pagesLastmod),
                 ];
-                
+
+                // Services — only if there are published services
+                $servicesCount = ServicePage::where('is_published', true)->count();
+                if ($servicesCount > 0) {
+                    $servicesLastmod = ServicePage::where('is_published', true)->max('updated_at');
+                    $sitemaps[] = [
+                        'url'     => url('/sitemaps/services.xml'),
+                        'lastmod' => $this->formatDate($servicesLastmod),
+                    ];
+                }
+
+                // Districts — only if there are published districts
+                $districtsCount = DistrictPage::where('is_published', true)->count();
+                if ($districtsCount > 0) {
+                    $districtsLastmod = DistrictPage::where('is_published', true)->max('updated_at');
+                    $sitemaps[] = [
+                        'url'     => url('/sitemaps/districts.xml'),
+                        'lastmod' => $this->formatDate($districtsLastmod),
+                    ];
+                }
+
+                // Blog — only if there are published posts
+                $blogCount = Post::published()->count();
+                if ($blogCount > 0) {
+                    $sitemaps[] = [
+                        'url'     => url('/sitemaps/blog.xml'),
+                        'lastmod' => $this->latestPostUpdate(),
+                    ];
+                }
+
+                // Programmatic — only if there are published indexable pages
+                $programmaticCount = ProgrammaticPage::published()->indexable()->count();
+                if ($programmaticCount > 0) {
+                    $programmaticLastmod = ProgrammaticPage::published()->indexable()->max('updated_at');
+                    $sitemaps[] = [
+                        'url'     => url('/sitemaps/programmatic.xml'),
+                        'lastmod' => $this->formatDate($programmaticLastmod),
+                    ];
+                }
+
                 return view('sitemaps.index', compact('sitemaps'))->render();
             });
         } catch (\Throwable $e) {
             // Fallback: build without cache if cache driver fails on server
             $sitemaps = [
-                ['url' => url('/sitemaps/pages.xml'), 'lastmod' => '2025-01-01T00:00:00+00:00'],
-                ['url' => url('/sitemaps/services.xml'), 'lastmod' => '2025-01-01T00:00:00+00:00'],
-                ['url' => url('/sitemaps/districts.xml'), 'lastmod' => '2025-01-01T00:00:00+00:00'],
-                ['url' => url('/sitemaps/programmatic.xml'), 'lastmod' => '2025-01-01T00:00:00+00:00'],
-                ['url' => url('/sitemaps/blog.xml'), 'lastmod' => '2025-01-01T00:00:00+00:00'],
+                ['url' => url('/sitemaps/pages.xml'), 'lastmod' => $this->formatDate(now())],
+                ['url' => url('/sitemaps/blog.xml'), 'lastmod' => $this->formatDate(now())],
             ];
             $content = view('sitemaps.index', compact('sitemaps'))->render();
         }
@@ -55,7 +85,7 @@ class SitemapController extends Controller
     }
 
     // ----------------------------------------------------------------
-    // Pages Sitemap (static pages)
+    // Pages Sitemap (static pages + listing pages)
     // ----------------------------------------------------------------
 
     public function pages(): Response
@@ -68,34 +98,62 @@ class SitemapController extends Controller
                 // Default fallback if no StaticPage records exist
                 if ($pages->isEmpty()) {
                     $urls[] = [
-                        'loc' => url('/'),
-                        'lastmod' => '2025-01-01T00:00:00+00:00',
-                        'changefreq' => 'monthly',
-                        'priority' => '1.0',
+                        'loc'        => url('/'),
+                        'lastmod'    => $this->formatDate(now()),
+                        'changefreq' => 'weekly',
+                        'priority'   => '1.0',
                     ];
                 } else {
                     foreach ($pages as $page) {
                         $urls[] = [
-                            'loc' => $page->slug === 'home' ? url('/') : url('/' . $page->slug),
-                            'lastmod' => $this->formatDate($page->updated_at),
-                            'changefreq' => 'monthly',
-                            'priority' => $page->slug === 'home' ? '1.0' : '0.8',
+                            'loc'        => $page->slug === 'home' ? url('/') : url('/' . $page->slug),
+                            'lastmod'    => $this->formatDate($page->updated_at),
+                            'changefreq' => $page->slug === 'home' ? 'weekly' : 'monthly',
+                            'priority'   => $page->slug === 'home' ? '1.0' : '0.8',
                         ];
                     }
                 }
-                
-                // Add blog landing page manually with last mod from posts
+
+                // Services listing page
+                if (ServicePage::where('is_published', true)->exists()) {
+                    $urls[] = [
+                        'loc'        => url('/services'),
+                        'lastmod'    => $this->formatDate(ServicePage::where('is_published', true)->max('updated_at')),
+                        'changefreq' => 'weekly',
+                        'priority'   => '0.9',
+                    ];
+                }
+
+                // Districts listing page
+                if (DistrictPage::where('is_published', true)->exists()) {
+                    $urls[] = [
+                        'loc'        => url('/districts'),
+                        'lastmod'    => $this->formatDate(DistrictPage::where('is_published', true)->max('updated_at')),
+                        'changefreq' => 'weekly',
+                        'priority'   => '0.8',
+                    ];
+                }
+
+                // Blog landing page
                 $urls[] = [
-                    'loc' => url('/blog'),
-                    'lastmod' => $this->latestPostUpdate(),
-                    'changefreq' => 'weekly',
-                    'priority' => '0.9',
+                    'loc'        => url('/blog'),
+                    'lastmod'    => $this->latestPostUpdate(),
+                    'changefreq' => 'daily',
+                    'priority'   => '0.9',
+                ];
+
+                // About page
+                $urls[] = [
+                    'loc'        => url('/about'),
+                    'lastmod'    => $this->formatDate(now()->subMonth()),
+                    'changefreq' => 'monthly',
+                    'priority'   => '0.6',
                 ];
 
                 return view('sitemaps.urlset', compact('urls'))->render();
             });
         } catch (\Throwable $e) {
-            $urls = [['loc' => url('/'), 'lastmod' => '2025-01-01T00:00:00+00:00', 'changefreq' => 'monthly', 'priority' => '1.0']];
+            $urls = [['loc' => url('/'), 'lastmod' => $this->formatDate(now()), 'changefreq' => 'weekly', 'priority' => '1.0']];
             $content = view('sitemaps.urlset', compact('urls'))->render();
         }
 
@@ -112,10 +170,10 @@ class SitemapController extends Controller
             $content = Cache::remember('sitemap:services', self::CACHE_TTL, function () {
                 $services = ServicePage::where('is_published', true)->select('slug', 'updated_at')->get();
                 $urls = $services->map(fn($srv) => [
-                    'loc' => url('/services/' . $srv->slug),
-                    'lastmod' => $this->formatDate($srv->updated_at),
+                    'loc'        => url('/services/' . $srv->slug),
+                    'lastmod'    => $this->formatDate($srv->updated_at),
                     'changefreq' => 'monthly',
-                    'priority' => '0.9',
+                    'priority'   => '0.9',
                 ])->toArray();
                 return view('sitemaps.urlset', compact('urls'))->render();
             });
@@ -137,10 +195,10 @@ class SitemapController extends Controller
             $content = Cache::remember('sitemap:districts', self::CACHE_TTL, function () {
                 $districts = DistrictPage::where('is_published', true)->select('slug', 'updated_at')->get();
                 $urls = $districts->map(fn($dst) => [
-                    'loc' => url('/districts/' . $dst->slug),
-                    'lastmod' => $this->formatDate($dst->updated_at),
+                    'loc'        => url('/districts/' . $dst->slug),
+                    'lastmod'    => $this->formatDate($dst->updated_at),
                     'changefreq' => 'monthly',
-                    'priority' => '0.8',
+                    'priority'   => '0.8',
                 ])->toArray();
                 return view('sitemaps.urlset', compact('urls'))->render();
             });
@@ -153,7 +211,7 @@ class SitemapController extends Controller
     }
 
     // ----------------------------------------------------------------
-    // Blog Sitemap
+    // Blog Sitemap (with image support for Google Image indexing)
     // ----------------------------------------------------------------
 
     public function blog(): Response
@@ -162,19 +220,35 @@ class SitemapController extends Controller
             $content = Cache::remember('sitemap:blog', self::CACHE_TTL, function () {
                 // Chunking for performance if many posts
                 $urls = [];
-                Post::published()->select('id', 'slug', 'updated_at', 'published_at')
+                Post::published()
+                    ->select('id', 'title', 'slug', 'excerpt', 'featured_image', 'featured_image_alt', 'updated_at', 'published_at')
                     ->orderByDesc('published_at')
                     ->chunk(500, function ($posts) use (&$urls) {
                         foreach ($posts as $post) {
                             // Safe max: handle NULL published_at
                             $publishedAt = $post->published_at ?? $post->updated_at;
                             $lastmod = $post->updated_at > $publishedAt ? $post->updated_at : $publishedAt;
-                            $urls[] = [
-                                'loc' => url('/blog/' . $post->slug),
-                                'lastmod' => $this->formatDate($lastmod),
+
+                            $entry = [
+                                'loc'        => url('/blog/' . $post->slug),
+                                'lastmod'    => $this->formatDate($lastmod),
                                 'changefreq' => 'weekly',
-                                'priority' => '0.8',
+                                'priority'   => '0.8',
                             ];
+
+                            // Add featured image for Google Image indexing
+                            if ($post->featured_image) {
+                                $imageUrl = $this->resolveImageUrl($post->featured_image);
+                                $entry['images'] = [
+                                    [
+                                        'loc'     => $imageUrl,
+                                        'title'   => e($post->featured_image_alt ?: $post->title),
+                                        'caption' => e($post->excerpt ? \Illuminate\Support\Str::limit(strip_tags($post->excerpt), 200) : $post->title),
+                                    ],
+                                ];
+                            }
+
+                            $urls[] = $entry;
                         }
                     });
 
@@ -202,10 +276,10 @@ class SitemapController extends Controller
                     ->chunk(500, function ($pages) use (&$urls) {
                         foreach ($pages as $page) {
                             $urls[] = [
-                                'loc' => url('/p/' . $page->slug),
-                                'lastmod' => $this->formatDate($page->updated_at),
+                                'loc'        => url('/p/' . $page->slug),
+                                'lastmod'    => $this->formatDate($page->updated_at),
                                 'changefreq' => 'monthly',
-                                'priority' => '0.7',
+                                'priority'   => '0.7',
                             ];
                         }
                     });
@@ -229,6 +303,7 @@ class SitemapController extends Controller
         return response($content, 200, [
             'Content-Type'  => 'application/xml; charset=utf-8',
             'Cache-Control' => 'public, max-age=' . self::CACHE_TTL,
+            'X-Robots-Tag'  => 'noindex',
         ]);
     }
 
@@ -241,22 +316,45 @@ class SitemapController extends Controller
                 ->orderByDesc('last_activity_at')
                 ->value('last_activity_at');
 
-            return $latest ? $this->formatDate($latest) : '2025-01-01T00:00:00+00:00';
+            return $latest ? $this->formatDate($latest) : $this->formatDate(now());
         } catch (\Throwable $e) {
-            return '2025-01-01T00:00:00+00:00';
+            return $this->formatDate(now());
         }
     }
 
-    private function formatDate($date)
+    private function formatDate($date): string
     {
         if (!$date) {
-            return '2025-01-01T00:00:00+00:00';
+            return now()->toAtomString();
         }
-        
+
         if (is_string($date)) {
             $date = \Carbon\Carbon::parse($date);
         }
-        
+
         return $date->toAtomString();
+    }
+
+    /**
+     * Convert a stored image path to a fully qualified URL.
+     * Handles both relative paths (storage/...) and absolute URLs.
+     */
+    private function resolveImageUrl(string $path): string
+    {
+        // Already a full URL
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        // Strip leading slash if present
+        $path = ltrim($path, '/');
+
+        // If it starts with 'storage/', use the storage URL helper
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+
+        // Fall back to asset helper
+        return asset($path);
     }
 }
